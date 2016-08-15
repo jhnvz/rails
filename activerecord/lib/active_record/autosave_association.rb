@@ -316,8 +316,10 @@ module ActiveRecord
       # +reflection+.
       def validate_collection_association(reflection)
         if association = association_instance_get(reflection.name)
+          all_records = association.target.find_all.to_a
+
           if records = associated_records_to_validate_or_save(association, new_record?, reflection.options[:autosave])
-            records.each_with_index { |record, index| association_valid?(reflection, record, index) }
+            records.each { |record| association_valid?(reflection, record, all_records.index(record)) }
           end
         end
       end

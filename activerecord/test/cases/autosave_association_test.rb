@@ -401,16 +401,18 @@ class TestDefaultAutosaveAssociationOnAHasManyAssociationWithAcceptsNestedAttrib
 
   def test_errors_should_be_indexed_when_passed_as_array
     guitar = Guitar.new
-    tuning_peg_valid = TuningPeg.new
-    tuning_peg_valid.pitch = 440.0
     tuning_peg_invalid = TuningPeg.new
+    tuning_peg_valid = TuningPeg.new(pitch: 440.0)
+    tuning_peg_invalid_2 = TuningPeg.new
 
-    guitar.tuning_pegs = [tuning_peg_valid, tuning_peg_invalid]
+    guitar.tuning_pegs = [tuning_peg_valid, tuning_peg_invalid, tuning_peg_valid_2]
 
     assert_not tuning_peg_invalid.valid?
+    assert_not tuning_peg_invalid_2.valid?
     assert tuning_peg_valid.valid?
     assert_not guitar.valid?
-    assert_equal ["is not a number"], guitar.errors["tuning_pegs[1].pitch"]
+    assert_equal ["is not a number"], guitar.errors["tuning_pegs[0].pitch"]
+    assert_equal ["is not a number"], guitar.errors["tuning_pegs[2].pitch"]
     assert_not_equal ["is not a number"], guitar.errors["tuning_pegs.pitch"]
   end
 
