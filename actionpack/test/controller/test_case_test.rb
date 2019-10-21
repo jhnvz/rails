@@ -63,6 +63,10 @@ class TestCaseTest < ActionController::TestCase
       render text: request.headers.env.to_json
     end
 
+    def test_empty_param
+      render plain: ::JSON.dump({ foo: params[:foo] })
+    end
+
     def test_html_output
       render :text => <<HTML
 <html>
@@ -85,11 +89,11 @@ HTML
     end
 
     def test_xml_output
-      response.content_type = "application/xml"
+      response.content_type = params[:response_as]
       render :text => <<XML
 <?xml version="1.0" encoding="UTF-8"?>
 <root>
-  <area>area is an empty tag in HTML, raising an error if not in xml mode</area>
+  <area><p>area is an empty tag in HTML, so it won't contain this content</p></area>
 </root>
 XML
     end
@@ -170,6 +174,13 @@ XML
     def view_assigns
       { "bar" => "bar" }
     end
+  end
+
+  def test_nil_param
+    response = get :test_empty_param, params: { foo: nil }
+    payload = JSON.parse(response.body)
+    assert payload.key?("foo"), "payload should have foo key"
+    assert_nil payload["foo"]
   end
 
   class DefaultUrlOptionsCachingController < ActionController::Base
@@ -375,18 +386,18 @@ XML
     assert_equal "bar", assigns[:bar]
   end
 
+  def test_should_impose_childless_html_tags_in_html
+    process :test_xml_output, "GET", { response_as: "text/html" }
+
+    # <area> auto-closes, so the <p> becomes a sibling
+    assert_select "root > area + p"
+  end
+
   def test_should_not_impose_childless_html_tags_in_xml
-    process :test_xml_output
+    process :test_xml_output, "GET", { response_as: "application/xml" }
 
-    begin
-      $stderr = StringIO.new
-      assert_select 'area' #This will cause a warning if content is processed as HTML
-      $stderr.rewind && err = $stderr.read
-    ensure
-      $stderr = STDERR
-    end
-
-    assert err.empty?
+    # <area> is not special, so the <p> is its child
+    assert_select "root > area > p"
   end
 
   def test_assert_generates
@@ -437,7 +448,7 @@ XML
     )
   end
 
-  def test_params_passing_with_fixnums
+  def test_params_passing_with_integer
     get :test_params, :page => {:name => "Page name", :month => 4, :year => 2004, :day => 6}
     parsed_params = eval(@response.body)
     assert_equal(
@@ -447,7 +458,7 @@ XML
     )
   end
 
-  def test_params_passing_with_fixnums_when_not_html_request
+  def test_params_passing_with_integers_when_not_html_request
     get :test_params, :format => 'json', :count => 999
     parsed_params = eval(@response.body)
     assert_equal(
@@ -662,7 +673,7 @@ XML
   READ_PLAIN = 'r:binary'
 
   def test_test_uploaded_file
-    filename = 'mona_lisa.jpg'
+    filename = "ruby_on_rails.jpg"
     path = "#{FILES_DIR}/#{filename}"
     content_type = 'image/png'
     expected = File.read(path)
@@ -683,12 +694,12 @@ XML
   def test_fixture_path_is_accessed_from_self_instead_of_active_support_test_case
     TestCaseTest.stubs(:fixture_path).returns(FILES_DIR)
 
-    uploaded_file = fixture_file_upload('/mona_lisa.jpg', 'image/png')
-    assert_equal File.open("#{FILES_DIR}/mona_lisa.jpg", READ_PLAIN).read, uploaded_file.read
+    uploaded_file = fixture_file_upload('/ruby_on_rails.jpg', 'image/png')
+    assert_equal File.open("#{FILES_DIR}/ruby_on_rails.jpg", READ_PLAIN).read, uploaded_file.read
   end
 
   def test_test_uploaded_file_with_binary
-    filename = 'mona_lisa.jpg'
+    filename = 'ruby_on_rails.jpg'
     path = "#{FILES_DIR}/#{filename}"
     content_type = 'image/png'
 
@@ -700,7 +711,7 @@ XML
   end
 
   def test_fixture_file_upload_with_binary
-    filename = 'mona_lisa.jpg'
+    filename = "ruby_on_rails.jpg"
     path = "#{FILES_DIR}/#{filename}"
     content_type = 'image/jpg'
 
@@ -712,27 +723,27 @@ XML
   end
 
   def test_fixture_file_upload
-    post :test_file_upload, :file => fixture_file_upload(FILES_DIR + "/mona_lisa.jpg", "image/jpg")
-    assert_equal '159528', @response.body
+    post :test_file_upload, :file => fixture_file_upload(FILES_DIR + "/ruby_on_rails.jpg", "image/jpg")
+    assert_equal '45142', @response.body
   end
 
   def test_fixture_file_upload_relative_to_fixture_path
     TestCaseTest.stubs(:fixture_path).returns(FILES_DIR)
-    uploaded_file = fixture_file_upload("mona_lisa.jpg", "image/jpg")
-    assert_equal File.open("#{FILES_DIR}/mona_lisa.jpg", READ_PLAIN).read, uploaded_file.read
+    uploaded_file = fixture_file_upload("ruby_on_rails.jpg", "image/jpg")
+    assert_equal File.open("#{FILES_DIR}/ruby_on_rails.jpg", READ_PLAIN).read, uploaded_file.read
   end
 
   def test_fixture_file_upload_ignores_nil_fixture_path
     TestCaseTest.stubs(:fixture_path).returns(nil)
-    uploaded_file = fixture_file_upload("#{FILES_DIR}/mona_lisa.jpg", "image/jpg")
-    assert_equal File.open("#{FILES_DIR}/mona_lisa.jpg", READ_PLAIN).read, uploaded_file.read
+    uploaded_file = fixture_file_upload("#{FILES_DIR}/ruby_on_rails.jpg", "image/jpg")
+    assert_equal File.open("#{FILES_DIR}/ruby_on_rails.jpg", READ_PLAIN).read, uploaded_file.read
   end
 
   def test_action_dispatch_uploaded_file_upload
-    filename = 'mona_lisa.jpg'
+    filename = 'ruby_on_rails.jpg'
     path = "#{FILES_DIR}/#{filename}"
     post :test_file_upload, :file => ActionDispatch::Http::UploadedFile.new(:filename => path, :type => "image/jpg", :tempfile => File.open(path))
-    assert_equal '159528', @response.body
+    assert_equal '45142', @response.body
   end
 
   def test_test_uploaded_file_exception_when_file_doesnt_exist

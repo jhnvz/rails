@@ -1,3 +1,57 @@
+## Rails 4.2.11.1 (March 11, 2019) ##
+
+*   No changes.
+
+
+## Rails 4.2.11 (November 27, 2018) ##
+
+*   No changes.
+
+
+## Rails 4.2.10 (September 27, 2017) ##
+
+*   Fix regression in behavior of `normalize_path`.
+
+    In Rails 5 there was a change to ensure the encoding of the original string
+    in a path was maintained. This was incorrectly backported to Rails 4.2 which
+    caused a regression.
+
+    *Eileen M. Uchitelle*
+
+## Rails 4.2.9 (June 26, 2017) ##
+
+*   Use more specific check for :format in route path
+
+    The current check for whether to add an optional format to the path is very lax
+    and will match things like `:format_id` where there are nested resources, e.g:
+
+    ``` ruby
+    resources :formats do
+      resources :items
+    end
+    ```
+
+    Fix this by using a more restrictive regex pattern that looks for the patterns
+    `(.:format)`, `.:format` or `/` at the end of the path. Note that we need to
+    allow for multiple closing parenthesis since the route may be of this form:
+
+    ``` ruby
+    get "/books(/:action(.:format))", controller: "books"
+    ```
+
+    This probably isn't what's intended since it means that the default index action
+    route doesn't support a format but we have a test for it so we need to allow it.
+
+    Fixes #28517.
+
+    *Andrew White*
+
+
+## Rails 4.2.8 (February 21, 2017) ##
+
+*   No changes.
+
+
 ## Rails 4.2.7 (July 12, 2016) ##
 
 *   No changes.

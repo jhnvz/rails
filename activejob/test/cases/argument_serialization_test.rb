@@ -14,7 +14,7 @@ class ArgumentSerializationTest < ActiveSupport::TestCase
     [ 1, 'a' ],
     { 'a' => 1 }
   ].each do |arg|
-    test "serializes #{arg.class} verbatim" do
+    test "serializes #{arg.class} - #{arg} verbatim" do
       assert_arguments_unchanged arg
     end
   end
@@ -33,6 +33,10 @@ class ArgumentSerializationTest < ActiveSupport::TestCase
 
   test 'should convert records to Global IDs' do
     assert_arguments_roundtrip [@person]
+  end
+
+  test "should keep Global IDs strings as they are" do
+    assert_arguments_roundtrip [@person.to_gid.to_s]
   end
 
   test 'should dive deep into arrays and hashes' do

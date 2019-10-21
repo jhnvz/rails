@@ -1,6 +1,6 @@
 require 'active_record/connection_adapters/abstract_mysql_adapter'
 
-gem 'mysql2', '>= 0.3.13', '< 0.5'
+gem 'mysql2', '>= 0.3.13', '< 0.6.0'
 require 'mysql2'
 
 module ActiveRecord
@@ -74,20 +74,11 @@ module ActiveRecord
         @connection.escape(string)
       end
 
-      def quoted_date(value)
-        if supports_datetime_with_precision? && value.acts_like?(:time) && value.respond_to?(:usec)
-          "#{super}.#{sprintf("%06d", value.usec)}"
-        else
-          super
-        end
-      end
-
       #--
       # CONNECTION MANAGEMENT ====================================
       #++
 
       def active?
-        return false unless @connection
         @connection.ping
       end
 
@@ -102,10 +93,7 @@ module ActiveRecord
       # Otherwise, this method does nothing.
       def disconnect!
         super
-        unless @connection.nil?
-          @connection.close
-          @connection = nil
-        end
+        @connection.close
       end
 
       #--
@@ -222,11 +210,9 @@ module ActiveRecord
 
       # Executes the SQL statement in the context of this connection.
       def execute(sql, name = nil)
-        if @connection
-          # make sure we carry over any changes to ActiveRecord::Base.default_timezone that have been
-          # made since we established the connection
-          @connection.query_options[:database_timezone] = ActiveRecord::Base.default_timezone
-        end
+        # make sure we carry over any changes to ActiveRecord::Base.default_timezone that have been
+        # made since we established the connection
+        @connection.query_options[:database_timezone] = ActiveRecord::Base.default_timezone
 
         super
       end

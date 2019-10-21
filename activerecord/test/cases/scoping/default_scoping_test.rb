@@ -375,6 +375,28 @@ class DefaultScopingTest < ActiveRecord::TestCase
                  DeveloperWithSelect.group(:salary).count
   end
 
+  def test_default_scope_with_joins
+    assert_equal Comment.where(post_id: SpecialPostWithDefaultScope.pluck(:id)).count,
+                 Comment.joins(:special_post_with_default_scope).count
+    assert_equal Comment.where(post_id: Post.pluck(:id)).count,
+                 Comment.joins(:post).count
+  end
+
+  def test_joins_not_affected_by_scope_other_than_default_or_unscoped
+    without_scope_on_post = Comment.joins(:post).to_a
+    with_scope_on_post = nil
+    Post.where(id: [1, 5, 6]).scoping do
+      with_scope_on_post = Comment.joins(:post).to_a
+    end
+
+    assert_equal with_scope_on_post, without_scope_on_post
+  end
+
+  def test_unscoped_with_joins_should_not_have_default_scope
+    assert_equal SpecialPostWithDefaultScope.unscoped { Comment.joins(:special_post_with_default_scope).to_a },
+                 Comment.joins(:post).to_a
+  end
+
   def test_default_scope_order_ignored_by_aggregations
     assert_equal DeveloperOrderedBySalary.all.count, DeveloperOrderedBySalary.count
   end

@@ -68,7 +68,7 @@ module Rails
         class_option :skip_test_unit,     type: :boolean, aliases: '-T', default: false,
                                           desc: 'Skip Test::Unit files'
 
-        class_option :rc,                 type: :string, default: false,
+        class_option :rc,                 type: :string, default: nil,
                                           desc: "Path to file containing extra configuration options for rails command"
 
         class_option :no_rc,              type: :boolean, default: false,
@@ -227,7 +227,7 @@ module Rails
         when "oracle"         then ["ruby-oci8", nil]
         when "postgresql"     then ["pg", ["~> 0.15"]]
         when "frontbase"      then ["ruby-frontbase", nil]
-        when "mysql"          then ["mysql2", [">= 0.3.13", "< 0.5"]]
+        when "mysql"          then ["mysql2", [">= 0.3.13", "< 0.6.0"]]
         when "sqlserver"      then ["activerecord-sqlserver-adapter", nil]
         when "jdbcmysql"      then ["activerecord-jdbcmysql-adapter", nil]
         when "jdbcsqlite3"    then ["activerecord-jdbcsqlite3-adapter", nil]
